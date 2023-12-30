@@ -14,7 +14,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  packages: read
 
 # Allow one concurrent deployment
 concurrency:
@@ -38,6 +37,8 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: npm run build
       - name: Setup Pages
