@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ZOOIZOOI/utils": "^1.0.10",
+    "simplex-noise": "^4.0.1",
     "tweakpane": "^4.0.3"
   }
 }

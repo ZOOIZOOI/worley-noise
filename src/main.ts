@@ -1,20 +1,23 @@
 import './style.css';
 import { Pane } from 'tweakpane';
 import { distance2D, range } from '@ZOOIZOOI/utils';
+import { createNoise3D } from 'simplex-noise';
 
 // Constants
 const SIZE = 150;
-const CELLS = 4;
+const CELLS = 3;
 const CELL_SIZE = SIZE / CELLS;
 
 // Settings
 const settings = {
   N: 0,
   speed: 0.04,
-  colorRange: { x: 0, y: 38 },
+  colorRange: { x: 0, y: 60 },
   isPaused: false,
   drawPoints: false,
   drawGrid: false,
+  distort: false,
+  hsl: true,
 }
 
 // Setup context
@@ -39,6 +42,8 @@ pane.addBinding(settings, 'colorRange', {
 pane.addBinding(settings, 'isPaused');
 pane.addBinding(settings, 'drawPoints');
 pane.addBinding(settings, 'drawGrid');
+pane.addBinding(settings, 'distort');
+pane.addBinding(settings, 'hsl');
 
 // Generate random points
 const points: any[] = [];
@@ -64,14 +69,17 @@ for (let i = 0; i < CELLS; i++) {
 let time = 0;
 let distances = [];
 
+// Noise
+const noise3D = createNoise3D();
+
 function draw() {
   // Update points position
   for (let i = 0, len = points.length; i < len; i++) {
     const point = points[i];
     const { origin, rotation, timeOffset } = point;
 
-    point.current.x = origin.x + CELL_SIZE * 0.5 * Math.sin((time + timeOffset) * rotation.x);
-    point.current.y = origin.y + CELL_SIZE * 0.5 * Math.cos((time + timeOffset) * rotation.y);
+    point.current.x = origin.x + CELL_SIZE * 0.8 * Math.sin((time + timeOffset) * rotation.x);
+    point.current.y = origin.y + CELL_SIZE * 0.8 * Math.cos((time + timeOffset) * rotation.y);
     // point.current.x = origin.x;
     // point.current.y = origin.y;
     // point.current.z = origin.z + CELL_SIZE * 0.5 * Math.cos((time + timeOffset) * rotation.y);
@@ -98,8 +106,13 @@ function draw() {
       });
       
       // Draw the pixels
-      const color = range(distances[settings.N], settings.colorRange.x, settings.colorRange.y, 0, 255);
-      context.fillStyle = `rgb(${color}, ${color}, ${color})`;
+      const distance = distances[settings.N];
+      const noiseScale = 0.01;
+      const noise = noise3D(x * noiseScale, y * noiseScale, distance * 0.3);
+      let newDistance = distance;
+      if (settings.distort) newDistance += noise * 6;
+      const color = range(newDistance, settings.colorRange.x, settings.colorRange.y, 0, 120);
+      context.fillStyle = settings.hsl ? `hsl(${color}, 100%, 50%)` : `rgb(${color}, ${color}, ${color})`;
       context.fillRect(x, y, 1, 1);
     }
   }
