@@ -7,3 +7,4 @@ Basic CPU implementation based on the [tutorial](https://www.youtube.com/watch?v
 ![export-3](./exports/export-3.gif)
 ![export-4](./exports/export-4.png)
 ![export-5](./exports/export-5.png)
+![export-6](./exports/export-6.png)

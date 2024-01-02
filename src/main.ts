@@ -1,6 +1,6 @@
 import './style.css';
 import { Pane } from 'tweakpane';
-import { distance2D, range } from '@ZOOIZOOI/utils';
+import { distance2D, distanceManhattan, range } from '@ZOOIZOOI/utils';
 import { createNoise3D } from 'simplex-noise';
 
 // Constants
@@ -17,7 +17,8 @@ const settings = {
   drawPoints: false,
   drawGrid: false,
   distort: false,
-  hsl: true,
+  hsl: false,
+  manhattan: true,
 }
 
 // Setup context
@@ -44,6 +45,7 @@ pane.addBinding(settings, 'drawPoints');
 pane.addBinding(settings, 'drawGrid');
 pane.addBinding(settings, 'distort');
 pane.addBinding(settings, 'hsl');
+pane.addBinding(settings, 'manhattan');
 
 // Generate random points
 const points: any[] = [];
@@ -73,13 +75,15 @@ let distances = [];
 const noise3D = createNoise3D();
 
 function draw() {
+  context.clearRect(0, 0, SIZE, SIZE);
+
   // Update points position
   for (let i = 0, len = points.length; i < len; i++) {
     const point = points[i];
     const { origin, rotation, timeOffset } = point;
 
-    point.current.x = origin.x + CELL_SIZE * 0.8 * Math.sin((time + timeOffset) * rotation.x);
-    point.current.y = origin.y + CELL_SIZE * 0.8 * Math.cos((time + timeOffset) * rotation.y);
+    point.current.x = origin.x + CELL_SIZE * 0.4 * Math.sin((time + timeOffset) * rotation.x);
+    point.current.y = origin.y + CELL_SIZE * 0.4 * Math.cos((time + timeOffset) * rotation.y);
     // point.current.x = origin.x;
     // point.current.y = origin.y;
     // point.current.z = origin.z + CELL_SIZE * 0.5 * Math.cos((time + timeOffset) * rotation.y);
@@ -92,7 +96,9 @@ function draw() {
 
       // Calc distances
       for (let i = 0, len = points.length; i < len; i++) {
-        distances.push(distance2D({x, y}, points[i].current));  
+        const current = points[i].current;
+        const dist = settings.manhattan ? distanceManhattan({x, y}, current) : distance2D({x, y}, current);
+        distances.push(dist);
       }
 
       // Sort the distances
@@ -107,13 +113,26 @@ function draw() {
       
       // Draw the pixels
       const distance = distances[settings.N];
-      const noiseScale = 0.01;
-      const noise = noise3D(x * noiseScale, y * noiseScale, distance * 0.3);
       let newDistance = distance;
-      if (settings.distort) newDistance += noise * 6;
-      const color = range(newDistance, settings.colorRange.x, settings.colorRange.y, 0, 120);
+      if (settings.distort) {
+        const noiseScale = 0.01;
+        const noise = noise3D(x * noiseScale, y * noiseScale, distance * 0.3);
+        newDistance += noise * 6;
+      }
+      let color = range(newDistance, settings.colorRange.x, settings.colorRange.y, 0, 255);
       context.fillStyle = settings.hsl ? `hsl(${color}, 100%, 50%)` : `rgb(${color}, ${color}, ${color})`;
       context.fillRect(x, y, 1, 1);
+
+      // const distance2 = distances[settings.N + 1];
+      // const a = Math.abs(distance2 - distance);
+      // if (a > 0 && a < 2) {
+      //   context.globalAlpha = 1;
+      //   context.fillStyle = `rgb(255, 255, 255)`;
+      //   context.fillRect(x, y, 1, 1);
+      //   context.globalAlpha = 1;
+      // }
+
+
     }
   }
 
