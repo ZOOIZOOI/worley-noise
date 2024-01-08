@@ -5,7 +5,7 @@ import { createNoise3D } from 'simplex-noise';
 
 // Constants
 const SIZE = 150;
-const CELLS = 3;
+const CELLS = 4;
 const CELL_SIZE = SIZE / CELLS;
 
 // Settings
@@ -13,12 +13,13 @@ const settings = {
   N: 0,
   speed: 0.04,
   colorRange: { x: 0, y: 60 },
-  isPaused: false,
+  isPaused: true,
   drawPoints: false,
   drawGrid: false,
   distort: false,
   hsl: false,
   manhattan: true,
+  fill: true,
 }
 
 // Setup context
@@ -46,6 +47,7 @@ pane.addBinding(settings, 'drawGrid');
 pane.addBinding(settings, 'distort');
 pane.addBinding(settings, 'hsl');
 pane.addBinding(settings, 'manhattan');
+pane.addBinding(settings, 'fill');
 
 // Generate random points
 const points: any[] = [];
@@ -58,11 +60,13 @@ for (let i = 0; i < CELLS; i++) {
     const y = j * CELL_SIZE + halfCellSize;
     // const z = SIZE * 0.5;
     const z = Math.random() * SIZE;
+    const color = palette(Math.random() * 0.5, {r: 0.5, g: 0.5, b: 0.5}, {r: 0.5, g: 0.5, b: 0.5},{r: 1.0, g: 1.0, b: 1.0},{r: 0.0, g: 0.1, b: 0.2});
     points.push({
       origin: {x, y, z},
       current: {x: 0, y: 0, z: 0},
       rotation: {x: Math.random(), y: Math.random(), z: Math.random()},
-      timeOffset: Math.random() * 100
+      timeOffset: Math.random() * 100,
+      color: {r: color.r * 255, g: color.g * 255, b: color.b * 255}
     });
   }
 }
@@ -98,29 +102,37 @@ function draw() {
       for (let i = 0, len = points.length; i < len; i++) {
         const current = points[i].current;
         const dist = settings.manhattan ? distanceManhattan({x, y}, current) : distance2D({x, y}, current);
-        distances.push(dist);
+        distances.push({dist, color: points[i].color});
       }
 
       // Sort the distances
       distances.sort((a, b) => {
-        if (a < b) {
+        if (a.dist < b.dist) {
           return -1;
-        } else if (b > a) {
+        } else if (b.dist > a.dist) {
           return 1;
         }
         return 0;
       });
-      
+
       // Draw the pixels
-      const distance = distances[settings.N];
+      const distance = distances[settings.N].dist;
+
       let newDistance = distance;
       if (settings.distort) {
         const noiseScale = 0.01;
         const noise = noise3D(x * noiseScale, y * noiseScale, distance * 0.3);
         newDistance += noise * 6;
       }
-      let color = range(newDistance, settings.colorRange.x, settings.colorRange.y, 0, 255);
-      context.fillStyle = settings.hsl ? `hsl(${color}, 100%, 50%)` : `rgb(${color}, ${color}, ${color})`;
+      
+      if (settings.fill) {
+        const color = distances[settings.N].color;
+        context.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
+      } else {
+        const color = range(newDistance, settings.colorRange.x, settings.colorRange.y, 0, 255);
+        context.fillStyle = settings.hsl ? `hsl(${color}, 100%, 50%)` : `rgb(${color}, ${color}, ${color})`;
+      }
+      
       context.fillRect(x, y, 1, 1);
 
       // const distance2 = distances[settings.N + 1];
@@ -131,8 +143,6 @@ function draw() {
       //   context.fillRect(x, y, 1, 1);
       //   context.globalAlpha = 1;
       // }
-
-
     }
   }
 
@@ -158,6 +168,15 @@ function draw() {
   
   // Update counter
   if (!settings.isPaused) time += settings.speed;
+}
+
+// https://iquilezles.org/articles/palettes/
+function palette(t: number, a: {r: number, g: number, b: number}, b: {r: number, g: number, b: number}, c: {r: number, g: number, b: number}, d: {r: number, g: number, b: number}) {
+  return {
+    r: a.r + b.r * Math.cos(6.28318 * (c.r * t + d.r)),
+    g: a.g + b.g * Math.cos(6.28318 * (c.g * t + d.g)),
+    b: a.b + b.b * Math.cos(6.28318 * (c.b * t + d.b))
+  };
 }
 
 // Ticker
