@@ -10,7 +10,7 @@ const CELL_SIZE = SIZE / CELLS;
 
 // Settings
 const settings = {
-  N: 0,
+  N: 4,
   speed: 0.04,
   colorRange: { x: 0, y: 60 },
   isPaused: true,
@@ -18,8 +18,9 @@ const settings = {
   drawGrid: false,
   distort: false,
   hsl: false,
-  manhattan: true,
-  fill: true,
+  manhattan: false,
+  fill: false,
+  border: true
 }
 
 // Setup context
@@ -48,6 +49,7 @@ pane.addBinding(settings, 'distort');
 pane.addBinding(settings, 'hsl');
 pane.addBinding(settings, 'manhattan');
 pane.addBinding(settings, 'fill');
+pane.addBinding(settings, 'border');
 
 // Generate random points
 const points: any[] = [];
@@ -130,19 +132,22 @@ function draw() {
         context.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
       } else {
         const color = range(newDistance, settings.colorRange.x, settings.colorRange.y, 0, 255);
-        context.fillStyle = settings.hsl ? `hsl(${color}, 100%, 50%)` : `rgb(${color}, ${color}, ${color})`;
+        // context.fillStyle = settings.hsl ? `hsl(${color}, 100%, 50%)` : `rgb(${color}, ${color}, ${color})`;
+        context.fillStyle = `rgb(255, 255, 255)`;
       }
       
       context.fillRect(x, y, 1, 1);
 
-      // const distance2 = distances[settings.N + 1];
-      // const a = Math.abs(distance2 - distance);
-      // if (a > 0 && a < 2) {
-      //   context.globalAlpha = 1;
-      //   context.fillStyle = `rgb(255, 255, 255)`;
-      //   context.fillRect(x, y, 1, 1);
-      //   context.globalAlpha = 1;
-      // }
+      if (settings.border) {
+        const distance2 = distances[settings.N + 1].dist;
+        const delta = Math.abs(distance2 - distance);
+        if (delta > 0 && delta < 1) {
+          context.globalAlpha = 1;
+          context.fillStyle = `rgb(0, 0, 0)`;
+          context.fillRect(x, y, 1, 1);
+          context.globalAlpha = 1;
+        }
+      }
     }
   }
 
