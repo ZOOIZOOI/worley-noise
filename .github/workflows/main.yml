@@ -35,10 +35,10 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+      - name: Authenticate with GitHub Packages
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.AUTH_TOKEN_PACKAGE_READ }}" >> ~/.npmrc
       - name: Install dependencies
         run: npm install
-        env:
-          NODE_AUTH_TOKEN: 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
       - name: Build
         run: npm run build
       - name: Setup Pages
